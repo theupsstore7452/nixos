@@ -2,7 +2,7 @@
 # your system.  Help is available in the configuration.nix(5) man page
 # and in the NixOS manual (accessible by running ‘nixos-help’).
 
-{ config, pkgs, ... }:
+{ config, lib, pkgs, ... }:
 
 {
   imports =
@@ -95,11 +95,17 @@
   # Install firefox.
   programs.firefox.enable = true;
 
+  # Graphite bundles assets under the Graphite Branding License.
+  # Allow only this package rather than enabling all unfree software.
+  nixpkgs.config.allowUnfreePredicate = pkg:
+    builtins.elem (lib.getName pkg) [ "graphite" ];
+
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
     gh
     git
+    graphite
   ];
 
   programs.nix-ld.enable = true;
