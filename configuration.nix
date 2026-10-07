@@ -18,6 +18,9 @@
   # Use latest kernel.
   boot.kernelPackages = pkgs.linuxPackages_latest;
 
+  # Keep package updates reproducible through flake.lock.
+  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+
   networking.hostName = "nixos"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
@@ -104,6 +107,8 @@
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
+    bubblewrap
+    (callPackage ./codex-latest.nix {})
     gh
     git
     graphite
