@@ -20,7 +20,7 @@ The October 3, 2026 update locks Nixpkgs to `c59305bab2065cfecc4944690d9eedbb56f
 
 `system.stateVersion` stays at `26.05`: it controls compatibility defaults for stored system data, not package versions.
 
-Validation on October 3: flake checks and the complete NixOS system build passed, including Graphite's source build. The built Codex CLI reports `codex-cli 0.160.0` and includes the executable code-mode host. This configuration is active on this PC, including the PDF Tools 0.2.16 upgrade applied on October 7.
+Validation on October 3: flake checks and the complete NixOS system build passed, including Graphite's source build. The built Codex CLI reports `codex-cli 0.160.0` and includes the executable code-mode host. This system baseline is active on this PC, with PDF Tools 0.2.16 deployed on October 7. The configuration in this repository now targets PDF Tools 0.2.17; apply it using the commands below to upgrade the running container.
 
 ## Build and apply
 
@@ -73,7 +73,7 @@ The previous stable-channel build was `0-unstable-2026-05-02` and displayed an o
 
 ## PDF Tools on the LAN
 
-`pdf-tools.nix` runs [PDF Tools 0.2.16](https://github.com/theupsstore7452/pdf-tools/releases/tag/v0.2.16)
+`pdf-tools.nix` runs [PDF Tools 0.2.17](https://github.com/theupsstore7452/pdf-tools/releases/tag/v0.2.17)
 as a Podman container managed by `podman-pdf-tools.service`. Its image is pinned
 to the immutable digest from the release's checksum-verified Compose attachment;
 anonymous pulls were verified, so no registry credentials are needed.
@@ -105,12 +105,19 @@ The access
 check uses the connection's remote IP, not a client-supplied forwarding header.
 The backend port is published only at `127.0.0.1:3000`.
 
-Release 0.2.16 uses the Elm frontend with relative asset and API URLs, so assets,
-uploads, previews, polling, and downloads work under `/pdftools/`. Caddy strips
-`/pdftools` before proxying requests and also preserves `/pdf/inspect`, `/convert`,
-`/merge`, `/split`, `/jobs`, `/jobs/*`, and `/gang-up/*` for existing direct API
-clients. Other routes return 404. Additional apps on this listener must avoid
-those compatibility paths.
+Release 0.2.17 uses relative asset and API URLs, so the frontend and workflows
+run under `/pdftools/` after Caddy strips that prefix. Root-level `/pdf/inspect`,
+`/convert`, `/merge`, `/split`, `/jobs`, `/jobs/*`, and `/gang-up/*` remain reserved
+for existing direct API clients. The old Wasm `/pkg/*` route is no longer needed.
+Other routes return 404. Additional apps on this listener must avoid the reserved
+API paths.
+
+This release includes the latest impose updates: all four setup tabs can be
+selected freely, Artwork uses a toolbar button, and the finished size starts
+at the first artwork page's original dimensions (for example, 5×7 inches).
+Finished dimensions remain editable, and preset or manually chosen sizes are
+retained when artwork changes. It also includes the restored dark-mode switch
+and impose workspace animations added since 0.2.13.
 
 Presets, recent jobs, export history, and staged impose uploads persist in
 `/var/lib/pdf-tools`, mounted at `/app/data`. The image entrypoint sets ownership

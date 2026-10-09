@@ -1,11 +1,11 @@
 { ... }:
 
 {
-  # v0.2.16, pinned to the image from its verified release attachment.
+  # v0.2.17, pinned to the image from its verified release attachment.
   virtualisation.oci-containers = {
     backend = "podman";
     containers.pdf-tools = {
-      image = "ghcr.io/theupsstore7452/pdf-tools@sha256:9d7c16c1874037e1e08c250b57c463f7d560abb462578726c5fb71d804277184";
+      image = "ghcr.io/theupsstore7452/pdf-tools@sha256:34ee58c85ca7e7c4896bdab68486b10927b22982a80b0de3518a699748efe637";
       ports = [ "127.0.0.1:3000:3000" ];
       environment = {
         PORT = "3000";
@@ -38,7 +38,7 @@
       # The business Windows client's observed IPv4 source is public too;
       # allow that exact address, rather than all publicly addressed clients.
       @outsideLan not remote_ip private_ranges 107.200.235.1/32 2600:1702:65ba:8400::/64 fe80::/10
-      # v0.2.16 uses relative asset and API URLs under /pdftools/.
+      # v0.2.17 uses relative asset and API URLs under /pdftools/.
       # Preserve root-level API routes for existing direct API clients.
       @pdfToolsRelease path /pdf/inspect /convert /merge /split /jobs /jobs/* /gang-up/*
 
