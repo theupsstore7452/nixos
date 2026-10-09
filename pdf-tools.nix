@@ -1,11 +1,11 @@
 { ... }:
 
 {
-  # v0.2.13, pinned to the image from its verified release attachment.
+  # v0.2.17, pinned to the image from its verified release attachment.
   virtualisation.oci-containers = {
     backend = "podman";
     containers.pdf-tools = {
-      image = "ghcr.io/theupsstore7452/pdf-tools@sha256:73f5a8d70e43f384583ca06cb6803fc35942dc5e2866d3370d384398517d14b8";
+      image = "ghcr.io/theupsstore7452/pdf-tools@sha256:34ee58c85ca7e7c4896bdab68486b10927b22982a80b0de3518a699748efe637";
       ports = [ "127.0.0.1:3000:3000" ];
       environment = {
         PORT = "3000";
@@ -32,15 +32,15 @@
       auto_https off
     '';
     virtualHosts.":80".extraConfig = ''
-      # Apply to every route, including the release's root-level API/assets.
+      # Apply to every route, including the compatibility API routes.
       # This LAN also uses globally addressed IPv6; private_ranges alone
       # rejects local IPv6 clients. Update this /64 if the router renumbers.
       # The business Windows client's observed IPv4 source is public too;
       # allow that exact address, rather than all publicly addressed clients.
       @outsideLan not remote_ip private_ranges 107.200.235.1/32 2600:1702:65ba:8400::/64 fe80::/10
-      # v0.2.13 embeds absolute URLs in HTML and Wasm. These routes are
-      # necessary for lazy workflow loading, uploads, polling and downloads.
-      @pdfToolsRelease path /pkg/* /pdf/inspect /convert /merge /split /jobs /jobs/* /gang-up/*
+      # v0.2.17 uses relative asset and API URLs under /pdftools/.
+      # Preserve root-level API routes for existing direct API clients.
+      @pdfToolsRelease path /pdf/inspect /convert /merge /split /jobs /jobs/* /gang-up/*
 
       # Preserve this order so the LAN check runs before every path handler.
       route {

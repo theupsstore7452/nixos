@@ -34,7 +34,7 @@ GitHub authentication is stored outside this repository. Never commit credential
 
 ## PDF Tools on the LAN
 
-`pdf-tools.nix` runs [PDF Tools 0.2.13](https://github.com/theupsstore7452/pdf-tools/releases/tag/v0.2.13)
+`pdf-tools.nix` runs [PDF Tools 0.2.17](https://github.com/theupsstore7452/pdf-tools/releases/tag/v0.2.17)
 as a Podman container managed by `podman-pdf-tools.service`. Its image is pinned
 to the immutable digest from the release's checksum-verified Compose attachment;
 anonymous pulls were verified, so no registry credentials are needed.
@@ -58,12 +58,19 @@ public subnet. Recheck that entry if the client's network or address changes.
 The access check uses the connection's remote IP, not a client-supplied forwarding header.
 The backend port is published only at `127.0.0.1:3000`.
 
-Release 0.2.13 embeds root-level asset and API URLs. In addition to stripping
-`/pdftools` before proxying requests, Caddy reserves `/pkg/*`, `/pdf/inspect`,
-`/convert`, `/merge`, `/split`, `/jobs`, `/jobs/*`, and `/gang-up/*` for this
-application. Keep these compatibility routes when using this release: removing
-them breaks frontend loading, uploads, previews, polling, presets, and downloads.
-Other routes return 404. Additional apps on this listener must avoid those paths.
+Release 0.2.17 uses relative asset and API URLs, so the frontend and workflows
+run under `/pdftools/` after Caddy strips that prefix. Root-level `/pdf/inspect`,
+`/convert`, `/merge`, `/split`, `/jobs`, `/jobs/*`, and `/gang-up/*` remain reserved
+for existing direct API clients. The old Wasm `/pkg/*` route is no longer needed.
+Other routes return 404. Additional apps on this listener must avoid the reserved
+API paths.
+
+This release includes the latest impose updates: all four setup tabs can be
+selected freely, Artwork uses a toolbar button, and the finished size starts
+at the first artwork page's original dimensions (for example, 5×7 inches).
+Finished dimensions remain editable, and preset or manually chosen sizes are
+retained when artwork changes. It also includes the restored dark-mode switch
+and impose workspace animations added since 0.2.13.
 
 Presets, recent jobs, export history, and staged impose uploads persist in
 `/var/lib/pdf-tools`, mounted at `/app/data`. The image entrypoint sets ownership
