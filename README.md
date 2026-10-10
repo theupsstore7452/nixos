@@ -71,6 +71,30 @@ Graphite uses the desktop package from the locked Nixpkgs revision. Its bundled 
 
 The previous stable-channel build was `0-unstable-2026-05-02` and displayed an outdated release-candidate notice. The unstable pin updates Graphite to the September 15 build. Editor behavior still needs verification after switching.
 
+## Helium browser
+
+`helium.nix` packages the official [Helium Linux 0.19.2.1 release](https://github.com/imputnet/helium-linux/releases/tag/0.19.2.1)
+for this x86_64 host. The upstream Debian archive is pinned by its published
+SHA-256 checksum; its executables are patched to use Nix libraries. The package
+includes the KDE application-menu entry and icon, GTK and Qt 6 integration, and
+the browser's normal sandbox. Launch it from the application menu or run `helium`.
+
+Helium is declared in `environment.systemPackages` and is also available as
+the `helium` flake package. To build and install it for the current user without
+requiring a system switch:
+
+```sh
+helium_path=$(nix build 'path:.#helium' --no-link --print-out-paths)
+nix-env -i "$helium_path"
+helium --version
+```
+
+Use the rebuild command above to install it system-wide. Once that configuration
+is active, remove the user-profile copy with `nix-env -e helium` so future
+system updates take precedence. To update this release pin, change `version`
+and the archive checksum in `helium.nix` together, then build and verify browser
+startup before applying the configuration.
+
 ## PDF Tools on the LAN
 
 `pdf-tools.nix` runs [PDF Tools 0.2.17](https://github.com/theupsstore7452/pdf-tools/releases/tag/v0.2.17)
