@@ -73,7 +73,7 @@ The previous stable-channel build was `0-unstable-2026-05-02` and displayed an o
 
 ## PDF Tools on the LAN
 
-`pdf-tools.nix` runs [PDF Tools 0.2.17](https://github.com/theupsstore7452/pdf-tools/releases/tag/v0.2.17)
+`pdf-tools.nix` runs [PDF Tools 0.2.18](https://github.com/theupsstore7452/pdf-tools/releases/tag/v0.2.18)
 as a Podman container managed by `podman-pdf-tools.service`. Its image is pinned
 to the immutable digest from the release's checksum-verified Compose attachment;
 anonymous pulls were verified, so no registry credentials are needed.
@@ -105,25 +105,25 @@ The access
 check uses the connection's remote IP, not a client-supplied forwarding header.
 The backend port is published only at `127.0.0.1:3000`.
 
-Release 0.2.17 uses relative asset and API URLs, so the frontend and workflows
+Release 0.2.18 uses relative asset and API URLs, so the frontend and workflows
 run under `/pdftools/` after Caddy strips that prefix. Root-level `/pdf/inspect`,
 `/convert`, `/merge`, `/split`, `/jobs`, `/jobs/*`, and `/gang-up/*` remain reserved
 for existing direct API clients. The old Wasm `/pkg/*` route is no longer needed.
 Other routes return 404. Additional apps on this listener must avoid the reserved
 API paths.
 
-This release includes the latest impose updates: all four setup tabs can be
-selected freely, Artwork uses a toolbar button, and the finished size starts
-at the first artwork page's original dimensions (for example, 5×7 inches).
-Finished dimensions remain editable, and preset or manually chosen sizes are
-retained when artwork changes. It also includes the restored dark-mode switch
-and impose workspace animations added since 0.2.13.
+This release uses a JavaScript browser bootstrap and includes the refreshed
+DA interface, Size/Sheet/Bleed setup tabs, individual artwork rotation, and
+improved quantity editing and saved settings. Finished dimensions remain
+editable, and preset or manually chosen sizes are retained when artwork changes.
 
-Presets, recent jobs, export history, and staged impose uploads persist in
+Presets, recent jobs, and staged impose uploads persist in
 `/var/lib/pdf-tools`, mounted at `/app/data`. The image entrypoint sets ownership
 and runs the app as an unprivileged user. Temporary background-job downloads
 do not survive a restart. Stop `podman-pdf-tools.service` while backing up this
 directory; container replacement and NixOS rollback do not roll back stored data.
+Version 0.2.18 removes export-history metadata and archived export downloads on
+startup. Back up this directory before upgrading to retain those legacy files.
 
 After switching, check the service and HTTP endpoint:
 
