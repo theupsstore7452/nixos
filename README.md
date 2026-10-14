@@ -20,7 +20,7 @@ The October 3, 2026 update locks Nixpkgs to `c59305bab2065cfecc4944690d9eedbb56f
 
 `system.stateVersion` stays at `26.05`: it controls compatibility defaults for stored system data, not package versions.
 
-Validation on October 3: flake checks and the complete NixOS system build passed, including Graphite's source build. The built Codex CLI reports `codex-cli 0.160.0` and includes the executable code-mode host. This system baseline is active on this PC, with PDF Tools 0.2.16 deployed on October 7. The configuration in this repository now targets PDF Tools 0.2.17; apply it using the commands below to upgrade the running container.
+Validation on October 3: flake checks and the complete NixOS system build passed, including Graphite's source build. The built Codex CLI reports `codex-cli 0.160.0` and includes the executable code-mode host. This system baseline is active on this PC. The configuration in this repository now targets PDF Tools 0.2.19; apply it using the commands below to upgrade the running container.
 
 ## Build and apply
 
@@ -73,7 +73,7 @@ The previous stable-channel build was `0-unstable-2026-05-02` and displayed an o
 
 ## PDF Tools on the LAN
 
-`pdf-tools.nix` runs [PDF Tools 0.2.18](https://github.com/theupsstore7452/pdf-tools/releases/tag/v0.2.18)
+`pdf-tools.nix` runs [PDF Tools 0.2.19](https://github.com/theupsstore7452/pdf-tools/releases/tag/v0.2.19)
 as a Podman container managed by `podman-pdf-tools.service`. Its image is pinned
 to the immutable digest from the release's checksum-verified Compose attachment;
 anonymous pulls were verified, so no registry credentials are needed.
@@ -105,17 +105,18 @@ The access
 check uses the connection's remote IP, not a client-supplied forwarding header.
 The backend port is published only at `127.0.0.1:3000`.
 
-Release 0.2.18 uses relative asset and API URLs, so the frontend and workflows
+Release 0.2.19 uses relative asset and API URLs, so the frontend and workflows
 run under `/pdftools/` after Caddy strips that prefix. Root-level `/pdf/inspect`,
 `/convert`, `/merge`, `/split`, `/jobs`, `/jobs/*`, and `/gang-up/*` remain reserved
 for existing direct API clients. The old Wasm `/pkg/*` route is no longer needed.
 Other routes return 404. Additional apps on this listener must avoid the reserved
 API paths.
 
-This release uses a JavaScript browser bootstrap and includes the refreshed
-DA interface, Size/Sheet/Bleed setup tabs, individual artwork rotation, and
-improved quantity editing and saved settings. Finished dimensions remain
-editable, and preset or manually chosen sizes are retained when artwork changes.
+This release adds compact workflow layouts, coordinated tool transitions,
+and DA components 0.2.5. It retains the JavaScript browser bootstrap,
+Size/Sheet/Bleed setup tabs, individual artwork rotation, and saved settings.
+Finished dimensions remain editable, and preset or manually chosen sizes are
+retained when artwork changes.
 
 Presets, recent jobs, and staged impose uploads persist in
 `/var/lib/pdf-tools`, mounted at `/app/data`. The image entrypoint sets ownership
