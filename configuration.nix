@@ -112,6 +112,7 @@
     gh
     git
     graphite
+    (callPackage ./helium.nix {})
   ];
 
   programs.nix-ld.enable = true;

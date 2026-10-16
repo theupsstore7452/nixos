@@ -14,6 +14,7 @@
 
       packages.x86_64-linux = {
         codex = host.pkgs.callPackage ./codex-latest.nix {};
+        helium = host.pkgs.callPackage ./helium.nix {};
       };
     };
 }
