@@ -1,13 +1,13 @@
-# Official Codex CLI release, pinned until Nixpkgs catches up.
+# Official Codex CLI release with the matching code-mode host.
 # Build with: nix build 'path:.#codex'
 { fetchurl, stdenvNoCC }:
 
 let
-  version = "0.160.0";
+  version = "0.163.0";
   releaseUrl = "https://github.com/openai/codex/releases/download/rust-v${version}";
   codeModeHost = fetchurl {
     url = "${releaseUrl}/codex-code-mode-host-x86_64-unknown-linux-musl.tar.gz";
-    sha256 = "ac6cd6288f0e39f46a33eba1cfd37711651f14f33dbc73d6a1b82eb45e038cac";
+    sha256 = "314263128ba6592e7e807c265deeaf928a692b72dcbfeb5e0b20c9423b703529";
   };
 in
 stdenvNoCC.mkDerivation {
@@ -16,7 +16,7 @@ stdenvNoCC.mkDerivation {
 
   src = fetchurl {
     url = "${releaseUrl}/codex-x86_64-unknown-linux-musl.tar.gz";
-    sha256 = "306865417d4ee7a927785852910a527f41e1e159add390ac5ae3accb67d44a13";
+    sha256 = "beb339e8ecd9ba057a6bb2dc81ad8ca474812edfbf0fc5056ca818797648dde4";
   };
 
   dontUnpack = true;
