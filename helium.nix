@@ -43,12 +43,12 @@
 
 stdenvNoCC.mkDerivation (finalAttrs: {
   pname = "helium";
-  version = "0.19.2.1";
+  version = "0.19.4.1";
 
   # Official Linux release; SHA-256 is published with the GitHub release asset.
   src = fetchurl {
     url = "https://github.com/imputnet/helium-linux/releases/download/${finalAttrs.version}/helium-bin_${finalAttrs.version}-1_amd64.deb";
-    sha256 = "794c2e7640c7682ec33aa05e5aff103e526a7ac2c9866b547ccedfd84ee2be1e";
+    sha256 = "e5a228ae1c6c2a9b5ec84f1dab00ac9ee4a66501a8eb62234dc614f8c9cb5b9c";
   };
 
   nativeBuildInputs = [ dpkg autoPatchelfHook wrapGAppsHook3 ];

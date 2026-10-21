@@ -1,11 +1,11 @@
 { ... }:
 
 {
-  # v0.2.19, pinned to the image from its verified release attachment.
+  # v0.2.21, pinned to the image from its verified release attachment.
   virtualisation.oci-containers = {
     backend = "podman";
     containers.pdf-tools = {
-      image = "ghcr.io/theupsstore7452/pdf-tools@sha256:7db1118f7bc030c74b21c702c6ee427e4cb59dcccf3c00edc9f1aa620df827d2";
+      image = "ghcr.io/theupsstore7452/pdf-tools@sha256:4fc7ac3c69398507f4d75e59621982218fdf39b0a6cdd7d1529d54456ed2c261";
       ports = [ "127.0.0.1:3000:3000" ];
       environment = {
         PORT = "3000";
