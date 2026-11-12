@@ -127,9 +127,10 @@ Run `fx login` to sign in through Vercel AI Gateway, then run `fx` from a projec
 directory. `fx doctor` checks the local setup. Update the Nix version and checksum
 together to upgrade this package; the Nix store copy cannot be updated in place.
 
-On November 12, 2026, Nix syntax validation passed. Building, installing, and
-runtime verification remain pending because the agent session could not access
-the host Nix daemon and shell network downloads were blocked.
+On November 12, 2026, the package built successfully and was installed for the
+current user. `fx --version` reported 0.0.16 and `fx --help` worked. `fx doctor
+--json` confirmed startup and GitHub CLI availability; provider sign-in remains
+required before sending model requests.
 
 ## PDF Tools on the LAN
 
