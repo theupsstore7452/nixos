@@ -106,6 +106,31 @@ system updates take precedence. To update this release pin, change `version`
 and the archive checksum in `helium.nix` together, then build and verify browser
 startup before applying the configuration.
 
+## Vercel fx harness
+
+`fx-vercel.nix` packages the official [Vercel Labs fx 0.0.16 release](https://github.com/vercel-labs/fx/releases/tag/v0.0.16)
+for this x86_64 Linux host, pinned to the archive's SHA-256 from GitHub release
+metadata. The package patches dynamic ELF dependencies for NixOS and includes
+upstream license notices. Its flake attribute is `fx-vercel`; the command is `fx`.
+
+Build and install for the current user without switching the system or applying
+pending service changes:
+
+```sh
+fx_path=$(nix build 'path:/home/store7452/Projects/nixos#fx-vercel' --no-link --print-out-paths) &&
+  nix-env -i "$fx_path"
+fx --version
+fx --help
+```
+
+Run `fx login` to sign in through Vercel AI Gateway, then run `fx` from a project
+directory. `fx doctor` checks the local setup. Update the Nix version and checksum
+together to upgrade this package; the Nix store copy cannot be updated in place.
+
+On November 12, 2026, Nix syntax validation passed. Building, installing, and
+runtime verification remain pending because the agent session could not access
+the host Nix daemon and shell network downloads were blocked.
+
 ## PDF Tools on the LAN
 
 `pdf-tools.nix` runs [PDF Tools 0.2.21](https://github.com/theupsstore7452/pdf-tools/releases/tag/v0.2.21)
