@@ -63,6 +63,49 @@ sudo nixos-rebuild switch --flake 'path:.#nixos'
 
 Use the same `--flake` argument for future rebuilds; a plain channel-based rebuild will use the configuration in `/etc/nixos` instead. Reboot when convenient to use the new kernel and start a fresh Plasma session.
 
+## Storage maintenance
+
+`storage-maintenance.nix` enables weekly Nix garbage collection with 30 days
+of system rollback history and automatic store deduplication. Installed and
+referenced packages remain protected by Nix garbage-collector roots.
+
+Weekly system and user timers remove unused container images older than 30
+days. They prune images only, preserving containers and volumes. The user
+timer also prunes unreferenced pnpm packages, skipping package cleanup while
+a package-manager operation is running.
+
+The user timer checks immediate Cargo projects in `~/Projects`. It removes
+only `target` directories with Cargo's cache marker that have had no modified
+files or directories for 30 days. It skips tracked files, symlinked projects,
+recent caches, active process references, and running Rust builds. The check
+can be previewed without deleting anything:
+
+```sh
+nix shell 'path:.#nixosConfigurations.nixos.pkgs.python3' \
+  --command python3 scripts/clean-inactive-builds.py --dry-run
+```
+
+Build output is regenerated on the next compilation. To clean a shelved
+project immediately, run `cargo clean` inside that project.
+
+Crash-dump storage uses `MaxUse=512M` and `KeepFree=10G`. The KDE Baloo user
+service runs with `QT_QPA_PLATFORM=offscreen` to avoid the extractor's display
+startup crash while retaining content indexing. The setting applies only to
+Baloo, leaving graphical applications' display settings unchanged.
+
+After applying the configuration, reload the current user's units, restart
+Baloo, and start the user cleanup timer (new logins load these automatically):
+
+```sh
+systemctl --user daemon-reload
+systemctl --user restart kde-baloo.service
+balooctl6 resume
+systemctl --user start storage-cache-cleanup.timer
+systemctl list-timers nix-gc.timer nix-optimise.timer storage-image-cleanup.timer
+systemctl --user list-timers storage-cache-cleanup.timer
+journalctl --user -u storage-cache-cleanup.service
+```
+
 ## Future package updates
 
 Refresh all Nixpkgs packages together, then validate and build before switching:
@@ -121,14 +164,16 @@ pre-upgrade data backup is stored at
 `/var/lib/pdf-tools-backups/pre-0.2.16-20261007T154704Z.tar.gz`.
 
 Apply this configuration using the rebuild command above, then open
-`http://<host-LAN-IP>/pdftools` from another LAN device. The host's IPv4 address
-on October 3 was `192.168.1.152`, giving <http://192.168.1.152/pdftools>.
-DHCP can change this address; use `ip -brief address` to check it or configure a
-DHCP reservation on the router.
+<https://192.168.1.152/pdftools/> from another LAN device. Reserve
+`192.168.1.152` in the router's DHCP settings: the HTTPS virtual host and its
+certificate use that address. If it changes, update `pdf-tools.nix` and rebuild.
+Local health checks can also use `https://localhost` or `https://127.0.0.1`.
 
-Caddy listens on HTTP port 80 and redirects `/pdftools` to `/pdftools/`.
-The firewall opens only port 80 for this deployment, with no HTTPS listener or
-certificate provisioning. Caddy accepts clients with private IPv4 addresses,
+Caddy terminates HTTPS on TCP port 443, redirects HTTP on port 80 to HTTPS,
+and redirects `/pdftools` to `/pdftools/`. The firewall opens TCP ports 80 and 443.
+Its `tls internal` issuer automatically provisions and renews certificates;
+each client must trust this Caddy instance's root CA as described below.
+Caddy accepts clients with private IPv4 addresses,
 IPv6 unique-local addresses in `fd00::/8`, loopback addresses, IPv6 link-local
 addresses, and the LAN's current IPv6 subnet `2600:1702:65ba:8400::/64`. Globally
 addressed IPv6 devices can still be on the LAN; Caddy's `private_ranges` shortcut
@@ -139,6 +184,58 @@ public subnet. Recheck that entry if the client's network or address changes.
 The access
 check uses the connection's remote IP, not a client-supplied forwarding header.
 The backend port is published only at `127.0.0.1:3000`.
+
+### Trust the HTTPS certificate
+
+Caddy's internal CA is appropriate for this LAN deployment; it does not require
+a public domain or inbound router port forwarding. Preserve `/var/lib/caddy`
+across rebuilds so client trust continues to work. The public root certificate is
+`/var/lib/caddy/.local/share/caddy/pki/authorities/local/root.crt` and is generated
+on the first HTTPS startup. Export only that certificate, keeping the CA keys
+private, and verify its SHA-256 fingerprint before importing it on other devices:
+
+```sh
+sudo install -m 0644 -o store7452 -g users \
+  /var/lib/caddy/.local/share/caddy/pki/authorities/local/root.crt \
+  /home/store7452/Downloads/pdf-tools-caddy-root.crt
+nix shell --inputs-from path:. nixpkgs#openssl --command \
+  openssl x509 -in ~/Downloads/pdf-tools-caddy-root.crt -noout -fingerprint -sha256
+```
+
+Transfer the certificate to each LAN client through a trusted channel. On
+Windows, import it into the current user's Trusted Root Certification Authorities
+store (PowerShell or Command Prompt, in the directory containing the file):
+
+```powershell
+certutil -user -addstore Root pdf-tools-caddy-root.crt
+```
+
+Restart the browser and verify the HTTPS page has no certificate warning.
+Firefox may require a separate Authorities import if it does not use the OS
+trust store. Command-line API clients must also trust this CA and use HTTPS
+directly for uploads, rather than depending on HTTP redirects. Curl can use
+`--cacert pdf-tools-caddy-root.crt` without changing its system trust store.
+
+HTTPS was activated on October 23, 2026 from `serve/pdf-tools-https`, using the
+same package baseline as the previously active October 20 configuration. Only
+Caddy and the firewall were reloaded; the PDF Tools container stayed running.
+The system build, Caddy validation, TLS 1.3 certificate and IP verification,
+HTTP redirects, localhost and LAN-address health checks, frontend assets,
+prefixed and compatibility API uploads, background job polling, PDF downloads,
+and temporary job cleanup passed. These checks ran on the server using the LAN
+address; certificate installation and browser checks on other clients remain
+client setup steps. The root certificate's SHA-256 fingerprint is:
+
+```text
+0B:60:D5:08:5F:A5:B8:2B:C5:13:5B:27:89:B2:4C:39:F4:FC:71:E7:AF:46:14:CC:56:F4:80:65:FA:BF:AC:5E
+```
+
+To revert this activation, run `sudo nixos-rebuild switch --rollback` before
+creating any further system generations. The previous system is
+`/nix/store/j0rhq8kb9cvhq2pwix91wr0i8l5czbip-nixos-system-nixos-26.11.20261017.09063bd`.
+The certificate state under `/var/lib/caddy` is preserved by rollback.
+
+### Routes and application data
 
 Release 0.2.21 uses relative asset and API URLs, so the frontend and workflows
 run under `/pdftools/` after Caddy strips that prefix. Root-level `/pdf/inspect`,
@@ -161,16 +258,22 @@ directory; container replacement and NixOS rollback do not roll back stored data
 Version 0.2.18 removes export-history metadata and archived export downloads on
 startup. Back up this directory before upgrading to retain those legacy files.
 
-After switching, check the service and HTTP endpoint:
+After switching and exporting the root certificate, check the services and HTTPS
+endpoint without disabling certificate verification:
 
 ```sh
 systemctl status caddy podman-pdf-tools
-curl -fsS http://127.0.0.1/pdftools/health
+curl --cacert ~/Downloads/pdf-tools-caddy-root.crt \
+  -fsS https://192.168.1.152/pdftools/health
 curl -I http://192.168.1.152/pdftools
+curl --cacert ~/Downloads/pdf-tools-caddy-root.crt \
+  -I https://192.168.1.152/pdftools
 ```
 
-The health response should be `ok`; the final command should return HTTP 308
-with `Location: /pdftools/`. For startup failures, inspect
+The health response should be `ok`. HTTP should return 308 with an HTTPS
+location; HTTPS `/pdftools` should return 308 with `Location: /pdftools/`.
+Verify a browser upload, job polling, and an exported download from a LAN client.
+For startup failures, inspect
 `journalctl -u podman-pdf-tools -u caddy`. Initial startup needs network access
 to GHCR to download the image. Both services start automatically at boot.
 

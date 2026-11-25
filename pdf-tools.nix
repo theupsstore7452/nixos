@@ -23,45 +23,68 @@
     after = [ "systemd-tmpfiles-setup.service" ];
   };
 
-  networking.firewall.allowedTCPPorts = [ 80 ];
+  networking.firewall.allowedTCPPorts = [ 80 443 ];
 
   services.caddy = {
     enable = true;
-    # HTTP only: no certificate requests or HTTPS redirect listener.
+    # Trust is installed explicitly on each client, including this host.
     globalConfig = ''
-      auto_https off
+      skip_install_trust
     '';
-    virtualHosts.":80".extraConfig = ''
-      # Apply to every route, including the compatibility API routes.
-      # This LAN also uses globally addressed IPv6; private_ranges alone
-      # rejects local IPv6 clients. Update this /64 if the router renumbers.
-      # The business Windows client's observed IPv4 source is public too;
-      # allow that exact address, rather than all publicly addressed clients.
-      @outsideLan not remote_ip private_ranges 107.200.235.1/32 2600:1702:65ba:8400::/64 fe80::/10
-      # v0.2.17 uses relative asset and API URLs under /pdftools/.
-      # Preserve root-level API routes for existing direct API clients.
-      @pdfToolsRelease path /pdf/inspect /convert /merge /split /jobs /jobs/* /gang-up/*
+    # Reserve this address in DHCP. Clients must trust Caddy's local root CA.
+    # Caddy manages certificates and redirects HTTP on port 80 to HTTPS on 443.
+    virtualHosts."https://192.168.1.152:443" = {
+      serverAliases = [ "https://localhost:443" "https://127.0.0.1:443" ];
+      extraConfig = ''
+        tls internal
 
-      # Preserve this order so the LAN check runs before every path handler.
-      route {
-        respond @outsideLan "LAN access only" 403
+        # Apply to every route, including the compatibility API routes.
+        # This LAN also uses globally addressed IPv6; private_ranges alone
+        # rejects local IPv6 clients. Update this /64 if the router renumbers.
+        # The business Windows client's observed IPv4 source is public too;
+        # allow that exact address, rather than all publicly addressed clients.
+        @outsideLan not remote_ip private_ranges 107.200.235.1/32 2600:1702:65ba:8400::/64 fe80::/10
+        # v0.2.21 uses relative asset and API URLs under /pdftools/.
+        # Preserve root-level API routes for existing direct API clients.
+        @pdfToolsRelease path /pdf/inspect /convert /merge /split /jobs /jobs/* /gang-up/*
 
-        handle /pdftools {
-          redir * /pdftools/ 308
+        # Preserve this order so the LAN check runs before every path handler.
+        route {
+          respond @outsideLan "LAN access only" 403
+
+          handle /inventory {
+            redir * /inventory/ 308
+          }
+
+          handle_path /inventory/* {
+            reverse_proxy 127.0.0.1:3004
+          }
+
+          handle /invoices {
+            redir * /invoices/ 308
+          }
+
+          handle_path /invoices/* {
+            reverse_proxy 127.0.0.1:3002
+          }
+
+          handle /pdftools {
+            redir * /pdftools/ 308
+          }
+
+          handle_path /pdftools/* {
+            reverse_proxy 127.0.0.1:3000
+          }
+
+          handle @pdfToolsRelease {
+            reverse_proxy 127.0.0.1:3000
+          }
+
+          handle {
+            respond "Not found" 404
+          }
         }
-
-        handle_path /pdftools/* {
-          reverse_proxy 127.0.0.1:3000
-        }
-
-        handle @pdfToolsRelease {
-          reverse_proxy 127.0.0.1:3000
-        }
-
-        handle {
-          respond "Not found" 404
-        }
-      }
-    '';
+      '';
+    };
   };
 }
