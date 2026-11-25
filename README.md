@@ -4,7 +4,7 @@ This repository contains the NixOS configuration for this computer. `hardware-co
 
 `flake.nix` uses `nixos-unstable` for the entire system, including the desktop, services, applications, and `linuxPackages_latest` kernel. `flake.lock` pins the current tested channel revision so builds are reproducible and do not depend on the machine's older Nix channels. Unstable provides newer packages than stable NixOS, but Nixpkgs can still lag upstream releases.
 
-The October 20, 2026 update locks Nixpkgs to `09063bd1f2b36fd9fd793c36dfade7bd40a93dfc` (October 17), the current `nixos-unstable` revision when checked. All packages and service dependencies come from this pin, except the separately pinned official Codex and Helium archives and the PDF Tools container. Selected package versions:
+The October 20, 2026 update locks the system Nixpkgs input to `09063bd1f2b36fd9fd793c36dfade7bd40a93dfc` (October 17), the current `nixos-unstable` revision when checked. The official Codex and Helium archives, the PDF Tools container, and the Nixpkgs input for T3 Code and Claude Code have separate pins. Selected package versions:
 
 | Package | Version |
 | --- | --- |
@@ -105,6 +105,21 @@ is active, remove the user-profile copy with `nix-env -e helium` so future
 system updates take precedence. To update this release pin, change `version`
 and the archive checksum in `helium.nix` together, then build and verify browser
 startup before applying the configuration.
+
+## T3 Code with Claude Code
+
+The system configuration installs the T3 Code desktop app, the `t3` CLI, and
+Claude Code. The `nixpkgs-t3` input pins both apps independently of the system
+Nixpkgs revision. The T3 Code launcher includes `claude` on its `PATH`.
+
+After applying the configuration, run `claude auth login` in a terminal to sign
+in to Anthropic. Open T3 Code from the KDE application menu or run
+`t3code-desktop`. In **Settings → Providers**, enable Claude and select it when
+starting a thread.
+
+To build the same bundle without switching the system, run `nix build .#t3-code`
+from the repository root. The launchers are `./result/bin/claude` and
+`./result/bin/t3code-desktop`.
 
 ## Vercel fx harness
 
